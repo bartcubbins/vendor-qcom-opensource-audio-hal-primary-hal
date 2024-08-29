@@ -41,9 +41,15 @@
 #include <cutils/properties.h>
 #include <platform_api.h>
 
-#define PRIMARY_HAL_PATH XSTR(LIB_AUDIO_HAL)
+#ifdef __LP64__
+#define PRIMARY_HAL_PATH "/vendor/lib64/hw/audio.primary.%s.so"
+#else
+#define PRIMARY_HAL_PATH "/vendor/lib/hw/audio.primary.%s.so"
+#endif
+
 #define XSTR(x) STR(x)
 #define STR(x) #x
+#define MAX_LIBRARY_PATH 100
 
 #define VOL_FLAG ( EFFECT_FLAG_TYPE_INSERT | \
                    EFFECT_FLAG_VOLUME_IND | \
@@ -642,8 +648,15 @@ static int vol_effect_get_descriptor(effect_handle_t   self,
     return 0;
 }
 
+static void get_library_path(char *lib_path)
+{
+    snprintf(lib_path, MAX_LIBRARY_PATH,
+             PRIMARY_HAL_PATH, XSTR(PRIMARY_HAL_PLATFORM_NAME));
+}
+
 static void init_once()
 {
+    char primary_hal_lib[100];
     int max_table_ent = 0;
     if (initialized) {
         ALOGV("%s : already init .. do nothing", __func__);
@@ -657,12 +670,13 @@ static void init_once()
     pthread_mutex_init(&vol_listner_init_lock, NULL);
 
     // get hal function pointer
-    if (access(PRIMARY_HAL_PATH, R_OK) == 0) {
-        void *hal_lib_pointer = dlopen(PRIMARY_HAL_PATH, RTLD_NOW);
+    get_library_path(primary_hal_lib);
+    if (access(primary_hal_lib, R_OK) == 0) {
+        void *hal_lib_pointer = dlopen(primary_hal_lib, RTLD_NOW);
         if (hal_lib_pointer == NULL) {
-            ALOGE("%s: DLOPEN failed for %s", __func__, PRIMARY_HAL_PATH);
+            ALOGE("%s: DLOPEN failed for %s", __func__, primary_hal_lib);
         } else {
-            ALOGV("%s: DLOPEN of %s Succes .. next get HAL entry function", __func__, PRIMARY_HAL_PATH);
+            ALOGV("%s: DLOPEN of %s Succes .. next get HAL entry function", __func__, primary_hal_lib);
             send_gain_dep_cal = (bool (*)(int))dlsym(hal_lib_pointer, AHAL_GAIN_DEPENDENT_INTERFACE_FUNCTION);
             if (send_gain_dep_cal == NULL) {
                 ALOGE("Couldnt able to get the function symbol");
@@ -706,7 +720,7 @@ static void init_once()
             }
         }
     } else {
-        ALOGE("%s: not able to acces lib %s ", __func__, PRIMARY_HAL_PATH);
+        ALOGE("%s: not able to acces lib %s ", __func__, primary_hal_lib);
     }
 
     // check system property to see if dumping is required

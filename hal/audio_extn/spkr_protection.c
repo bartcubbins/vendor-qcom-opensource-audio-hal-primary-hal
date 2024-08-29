@@ -92,6 +92,12 @@
 #include <log_utils.h>
 #endif
 
+#ifdef __LP64__
+#define LIB_THERMAL_CLIENT "/vendor/lib64/libthermalclient.so"
+#else
+#define LIB_THERMAL_CLIENT "/vendor/lib/libthermalclient.so"
+#endif
+
 #ifdef SPKR_PROT_ENABLED
 
 /*Range of spkr temparatures -30C to 80C*/
@@ -2321,8 +2327,7 @@ void spkr_prot_init(void *adev, spkr_prot_init_config_t spkr_prot_init_config_va
     pthread_mutex_init(&handle.mutex_spkr_prot, NULL);
     pthread_mutex_init(&handle.spkr_calib_cancelack_mutex, NULL);
     pthread_mutex_init(&handle.spkr_prot_thermalsync_mutex, NULL);
-    handle.thermal_handle = dlopen("/vendor/lib/libthermalclient.so",
-            RTLD_NOW);
+    handle.thermal_handle = dlopen(LIB_THERMAL_CLIENT, RTLD_NOW);
     if (!handle.thermal_handle) {
         ALOGE("%s: DLOPEN for thermal client failed", __func__);
     } else {

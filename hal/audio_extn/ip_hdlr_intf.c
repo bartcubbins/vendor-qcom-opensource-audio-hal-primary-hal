@@ -39,7 +39,11 @@
 #ifdef LINUX_ENABLED
 #define LIB_PATH "libaudio_ip_handler.so"
 #else
+#ifdef __LP64__
+#define LIB_PATH "/system/vendor/lib64/libaudio_ip_handler.so"
+#else
 #define LIB_PATH "/system/vendor/lib/libaudio_ip_handler.so"
+#endif
 #endif
 
 #include <pthread.h>

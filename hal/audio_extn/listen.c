@@ -49,7 +49,11 @@
 
 #ifdef AUDIO_LISTEN_ENABLED
 
+#ifdef __LP64__
+#define LIB_LISTEN_LOADER "/vendor/lib64/liblistenhardware.so"
+#else
 #define LIB_LISTEN_LOADER "/vendor/lib/liblistenhardware.so"
+#endif
 
 #define LISTEN_LOAD_SYMBOLS(dev, func_p, func_type, symbol) \
 {\
